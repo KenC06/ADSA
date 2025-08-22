@@ -5,9 +5,12 @@
 #include <string>
 
 using namespace std;
-
-string addNumbers(string num1, string num2) {
-  // reverese num1 and num2 to start from the back
+string addNumbers(string num1, string num2, int base){
+  
+  if(base > 10 || base < 2){
+    return "0";
+  }
+    // reverese num1 and num2 to start from the back
   reverse(num1.begin(), num1.end());
   reverse(num2.begin(), num2.end());
 
@@ -26,9 +29,9 @@ string addNumbers(string num1, string num2) {
 
     int sum = digit1 + digit2 + carry;
     // the digit in place
-    result.push_back((sum % 10) + '0');
+    result.push_back((sum % base) + '0');
     // calculate carry
-    carry = sum / 10;
+    carry = sum / base;
   }
 
   // convert carry into int and push back
@@ -41,7 +44,11 @@ string addNumbers(string num1, string num2) {
   return result;
 }
 
-string subtraction(string num1, string num2) {
+string subtraction(string num1, string num2, int base) {
+    if(base > 10 || base < 2){
+        return "0";
+    }
+
   reverse(num1.begin(), num1.end());
   reverse(num2.begin(), num2.end());
 
@@ -58,7 +65,7 @@ string subtraction(string num1, string num2) {
     digit1 = digit1 - borrow;
 
     if (digit1 < digit2) {
-      digit1 = digit1 + 10;
+      digit1 = digit1 + base;
       borrow = 1;
     } else {
       borrow = 0;
@@ -75,6 +82,19 @@ string subtraction(string num1, string num2) {
   return result;
 }
 
+static string toBaseSmall(int v, int base) {
+    if (v == 0) return "0";
+    string out;
+    while (v > 0) {
+        int d = v % base;
+        out.push_back(char('0' + d));
+        v /= base;
+    }
+    reverse(out.begin(), out.end());
+    return out;
+}
+
+
 string shiftLeft(const string &num, int n) { return num + string(n, '0'); }
 
 string stripLeadingZeros(const string &s) {
@@ -83,7 +103,7 @@ string stripLeadingZeros(const string &s) {
   return s.substr(i);
 }
 
-string karatsuba(string num1, string num2) {
+string karatsuba(string num1, string num2, int base) {
   num1 = stripLeadingZeros(num1);
   num2 = stripLeadingZeros(num2);
 
@@ -94,7 +114,7 @@ string karatsuba(string num1, string num2) {
 
   if (num1.size() == 1 && num2.size() == 1) {
     int prod = (num1[0] - '0') * (num2[0] - '0');
-    return to_string(prod);
+    return toBaseSmall(prod,base);
   }
 
   int n = max(num1.size(), num2.size());
@@ -116,15 +136,15 @@ string karatsuba(string num1, string num2) {
   string b1 = num2.substr(0, n - m);
   string b0 = num2.substr(n - m);
 
-  string a1b1 = karatsuba(a1, b1);
-  string a0b0 = karatsuba(a0, b0);
-  string a1a0b1b0 = karatsuba(addNumbers(a1, a0), addNumbers(b1, b0));
-  string a1b1a0b0 = subtraction(subtraction(a1a0b1b0, a1b1), a0b0);
+  string a1b1 = karatsuba(a1, b1, base);
+  string a0b0 = karatsuba(a0, b0, base);
+  string a1a0b1b0 = karatsuba(addNumbers(a1, a0, base), addNumbers(b1, b0, base), base);
+  string a1b1a0b0 = subtraction(subtraction(a1a0b1b0, a1b1, base), a0b0, base);
 
   string first = shiftLeft(a1b1, 2 * m);
   string second = shiftLeft(a1b1a0b0, m);
 
-  string final = addNumbers(addNumbers(first, second), a0b0);
+  string final = addNumbers(addNumbers(first, second, base), a0b0, base);
 
   return stripLeadingZeros(final);
 }

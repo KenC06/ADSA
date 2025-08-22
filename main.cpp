@@ -42,11 +42,13 @@ string addNumbers(string num1, string num2, int base) {
   return result;
 }
 
+// subtraction fucntion
 string subtraction(string num1, string num2, int base) {
   if (base > 10 || base < 2) {
     return "0";
   }
 
+  // reverse numbers
   reverse(num1.begin(), num1.end());
   reverse(num2.begin(), num2.end());
 
@@ -58,8 +60,10 @@ string subtraction(string num1, string num2, int base) {
 
   for (int i = 0; i < numSize1; i++) {
     int digit1 = num1[i] - '0';
+    // assume smaller number
     int digit2 = (i < numSize2) ? num2[i] - '0' : 0;
 
+    // digit1 - 1 if borrow = 1
     digit1 = digit1 - borrow;
 
     if (digit1 < digit2) {
@@ -68,18 +72,23 @@ string subtraction(string num1, string num2, int base) {
     } else {
       borrow = 0;
     }
+    // compute subtraction
     int subtraction = digit1 - digit2;
+    // push back new subtraction into result string
     result.push_back(subtraction + '0');
   }
 
+  // getrid of any leading zeros
   while (result.size() > 1 && result.back() == '0') {
     result.pop_back();
   }
 
+  // reverse back
   reverse(result.begin(), result.end());
   return result;
 }
 
+//converts any base 10 to the correct base
 static string toBaseSmall(int v, int base) {
   if (v == 0) return "0";
   string out;
@@ -92,15 +101,22 @@ static string toBaseSmall(int v, int base) {
   return out;
 }
 
+// shifts number n places left
 string shiftLeft(const string &num, int n) { return num + string(n, '0'); }
 
+//get rid of any leading zeros
 string stripLeadingZeros(const string &s) {
   int i = 0;
-  while (i + 1 < (int)s.size() && s[i] == '0') i++;
+  int sSize = s.size();
+  while (i + 1 < sSize && s[i] == '0') {
+    i++;
+  };
   return s.substr(i);
 }
 
+//karatsuba function
 string karatsuba(string num1, string num2, int base) {
+    //checking and getting rid of leading zeros
   num1 = stripLeadingZeros(num1);
   num2 = stripLeadingZeros(num2);
 
@@ -109,11 +125,13 @@ string karatsuba(string num1, string num2, int base) {
     return "0";
   }
 
+  //karatsuba base case
   if (num1.size() == 1 && num2.size() == 1) {
     int prod = (num1[0] - '0') * (num2[0] - '0');
     return toBaseSmall(prod, base);
   }
 
+  //find largest numbers between the 2 strings
   int n = max(num1.size(), num2.size());
   if (n % 2) {
     n++;
@@ -127,7 +145,7 @@ string karatsuba(string num1, string num2, int base) {
 
   int m = n / 2;
 
-  // split the numbers
+  // split the numbers karatsuba method
   string a1 = num1.substr(0, n - m);
   string a0 = num1.substr(n - m);
   string b1 = num2.substr(0, n - m);
@@ -153,10 +171,9 @@ int main() {
   cin >> I1 >> I2 >> B;
 
   string sum = addNumbers(I1, I2, B);
-  string prod = karatsuba(I1, I2, B);
+  string product = karatsuba(I1, I2, B);
 
-  // division not implemented → just output 0
-  cout << sum << " " << prod << " 0\n";
+  cout << sum << " " << product << " 0\n";
 
   return 0;
 }
