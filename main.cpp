@@ -13,9 +13,9 @@ struct Node {
   Node(int k) : key(k), left(nullptr), right(nullptr), height(1) {}
 };
 
-// find height of node n*
+// find height of node n
 static inline int h(Node* n) { return n ? n->height : 0; }
-// find balance for avl of node n*
+// find balance for avl of node n
 static inline int balance(Node* n) { return n ? h(n->left) - h(n->right) : 0; }
 
 // rotate right
@@ -80,7 +80,7 @@ Node* insert(Node* root, int key) {
 Node* maxValueNode(Node* node) {
   Node* curr = node;
   while (curr && curr->right) {
-    // traverse to right most node
+    // traverse to right most node for swapping
     curr = curr->right;
   }
   return curr;
@@ -125,15 +125,18 @@ Node* deleteNode(Node* root, int key) {
   if (b > 1 && balance(root->left) >= 0) {
     return rotateRight(root);
   }
+
+  // right heavy
+  if (b < -1 && balance(root->right) <= 0) {
+    return rotateLeft(root);
+  }
+
   // left-right rotate
   if (b > 1 && balance(root->left) < 0) {
     root->left = rotateLeft(root->left);
     return rotateRight(root);
   }
-  // right heavy
-  if (b < -1 && balance(root->right) <= 0) {
-    return rotateLeft(root);
-  }
+
   // right-left rotate
   if (b < -1 && balance(root->right) > 0) {
     root->right = rotateRight(root->right);
@@ -199,9 +202,9 @@ int main() {
     postorder(root, output);
   }
   if (output.empty()) {
-    cout << "EMPTY\n";
+    cout << "EMPTY";
   } else {
-    //output the traversal
+    // output the traversal
     for (size_t i = 0; i < output.size(); i++) {
       if (i) cout << ' ';
       cout << output[i];
