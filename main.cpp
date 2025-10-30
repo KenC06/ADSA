@@ -1,102 +1,105 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-struct Slot {
-  // 0=never used, 1= tombstoned,  2=occupied
-  int status = 0;
-  string key;
-};
-
-// hashes the last char, then finds the ascii value for future sorting
-static inline int hidx(const string& s) {
-  return static_cast<int>(s.back() - 'a');
+static inline int letterToCost(char c) {
+  if (c >= 'A' && c <= 'Z') {
+    return c - 'A';  // A-Z=1 to 25
+  }
+  return c - 'a' + 26;  // a-z=27 to 51
 }
 
+struct Edge {
+  int u, v, w;
+  bool existing;
+};
+
+struct DSU {
+  vector<int> p, r;
+  DSU(int n = 0) { init(n); }
+  void init(int n) {
+    p.resize(n);
+    r.assign(n, 0);
+    iota(p.begin(), p.end(), 0);
+  }
+  // finds the group city x belongs in
+  int find(int x) { return p[x] == x ? x : p[x] = find(p[x]); }
+  // merges two cities i.e build
+  bool unite(int a, int b) {
+    a = find(a);
+    b = find(b);
+    if (a == b) {
+      return false;
+    }
+    if (r[a] < r[b]) {
+      swap(a, b);
+    }
+    p[b] = a;
+    if (r[a] == r[b]) {
+      r[a]++;
+    }
+    return true;
+  }
+};
+
 int main() {
-  ios::sync_with_stdio(false);
-  cin.tie(nullptr);
-
-  // read the single input line of moves
-  string line;
-  if (!getline(cin, line)) {
-    line = "";
-  }
-  stringstream ss(line);
-  vector<string> moves;
-  for (string tok; ss >> tok;) {
-    moves.push_back(tok);
+  string countryStr, buildStr, destroyStr;
+  //checks for incorrect inputs
+  if (!(cin >> countryStr >> buildStr >> destroyStr)) {
+    return 0;
   }
 
-  // table with 26 slots
-  array<Slot, 26> table;
+  // split commas into rows
+  auto split = [](const string& s) {
+    vector<string> parts;
+    string cur;
+    stringstream ss(s);
+    while (getline(ss, cur, ',')) parts.push_back(cur);
+    return parts;
+  };
 
-  // for the number of moves
-  for (const string& move : moves) {
-    if (move.empty()) {
-      continue;
-    }
-    char op = move[0];         //A or D, insert or delete
-    string key = move.substr(1);  //key
+  //do this for all 3 inputs
+  vector<string> country = split(countryStr);
+  vector<string> build = split(buildStr);
+  vector<string> destroy = split(destroyStr);
 
-    int start = hidx(key); //hashes the value start is an index
-    int pos = start;
+  int N = (int)country.size();
+  vector<Edge> existing, missing;
 
-    if (op == 'A') {
-      // search to ensure key doesnt exist
-      bool exists = false;
-      //while loop to search for an empty pos, if empty no duplicates
-      while (table[pos].status != 0) {
-        //position
-        if (table[pos].status == 2 && table[pos].key == key) {
-          exists = true;
-          break;
-        }
-        //loop around
-        pos = (pos + 1) % 26;
-        if (pos == start){
-          break;
-        }
-      }
-      //if exists leave the current loop
-      if (exists){
-        continue;
-    }
-
-      // back to start and insert on first unoccupied slot
-      pos = start;
-      while (table[pos].status == 2) {
-        pos = (pos + 1) % 26;
-      }
-      // empty slot found status 2 and key=key
-      table[pos].status = 2;
-      table[pos].key = key;
-
-    } else if (op == 'D') {
-      // search for target, tombstone if found 
-      pos = start;
-      //while loop till the first 0, if there is a 0 then key will be never used
-      while (table[pos].status !=0) {
-        //check for target
-        if (table[pos].status == 2 && table[pos].key == key) {
-          table[pos].status = 1;  // tombstone the position
-          table[pos].key.clear(); 
-          break;
-        }
-        pos = (pos + 1) % 26;
-        if (pos == start) break; 
+  //check all edge lists
+  for (int i = 0; i < N; i++) {
+    for (int j = i + 1; j < N; j++) {
+      if (country[i][j] == '1') {
+        existing.push_back({i, j, letterToCost(destroy[i][j]), true});
+      } else {
+        missing.push_back({i, j, letterToCost(build[i][j]), false});
       }
     }
   }
 
-  // the output after each move
-  bool first = true;
-  for (const auto& s : table) {
-    if (s.status == 2) {
-      if (!first) cout << ' ';
-      cout << s.key;
-      first = false;
+  long long totalCost = 0;
+  DSU dsu(N);  //initialise dsu
+
+  //handles current edges
+  //keep any non loop edges
+  sort(existing.begin(), existing.end(),
+       [](const Edge& a, const Edge& b) { return a.w > b.w; });
+
+  for (const auto& e : existing) {
+    if (!dsu.unite(e.u, e.v)) {
+      // existing edges creates a loop, destory and pay cost
+      totalCost += e.w;
     }
   }
-  cout << '\n';
+  // create missing roads prioritise cheapest cost first, and pay cost
+  sort(missing.begin(), missing.end(),
+       [](const Edge& a, const Edge& b) { return a.w < b.w; });
+
+  for (const auto& e : missing) {
+    if (dsu.unite(e.u, e.v)) {
+      totalCost += e.w;  //pay cost
+    }
+  }
+
+  cout << totalCost << '\n';
   return 0;
 }
